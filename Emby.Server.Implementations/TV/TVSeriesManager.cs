@@ -169,6 +169,7 @@ namespace Emby.Server.Implementations.TV
 
                     return false;
                 })
+                .OrderByDescending(i => i.Item1)
                 .Select(i => i.Item2())
                 .Where(i => i != null);
         }
@@ -277,7 +278,16 @@ namespace Emby.Server.Implementations.TV
 
                 var lastWatchedDate = userData.LastPlayedDate ?? DateTime.MinValue.AddDays(1);
 
-                return new Tuple<DateTime, Func<Episode>>(lastWatchedDate, getEpisode);
+                var nextEpisode = getEpisode();
+
+                var lastEngagementTime = lastWatchedDate;
+
+                if (nextEpisode != null && DateTime.Compare(nextEpisode.DateCreated, lastWatchedDate) > 0)
+                {
+                    lastEngagementTime = nextEpisode.DateCreated;
+                }
+
+                return new Tuple<DateTime, Func<Episode>>(lastEngagementTime, getEpisode);
             }
 
             // Return the first episode
