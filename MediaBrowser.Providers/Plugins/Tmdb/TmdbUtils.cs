@@ -70,7 +70,8 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
         public static PersonKind MapCrewToPersonType(Crew crew)
         {
             if (crew.Department.Equals("production", StringComparison.OrdinalIgnoreCase)
-                && crew.Job.Contains("director", StringComparison.OrdinalIgnoreCase))
+                && crew.Job.Contains("director", StringComparison.OrdinalIgnoreCase)
+                && !crew.Job.Contains("casting", StringComparison.OrdinalIgnoreCase))
             {
                 return PersonKind.Director;
             }
