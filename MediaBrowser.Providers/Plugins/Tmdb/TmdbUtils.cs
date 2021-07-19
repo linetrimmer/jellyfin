@@ -33,7 +33,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
         /// <summary>
         /// Maximum number of cast members to pull.
         /// </summary>
-        public const int MaxCastMembers = 15;
+        public const int MaxCastMembers = 150;
 
         /// <summary>
         /// The crew types to keep.
