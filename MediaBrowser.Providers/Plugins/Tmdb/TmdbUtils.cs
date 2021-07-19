@@ -76,7 +76,16 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
                 return PersonType.Producer;
             }
 
-            if (crew.Department.Equals("writing", StringComparison.InvariantCultureIgnoreCase))
+            if (crew.Department.Equals("writing", StringComparison.InvariantCultureIgnoreCase)
+                && !crew.Job.Contains("artist", StringComparison.InvariantCultureIgnoreCase)
+                && !crew.Job.Contains("supervisor", StringComparison.InvariantCultureIgnoreCase)
+                && !crew.Job.Contains("consultant", StringComparison.InvariantCultureIgnoreCase)
+                && !crew.Job.Contains("manager", StringComparison.InvariantCultureIgnoreCase)
+                && !crew.Job.Contains("editor", StringComparison.InvariantCultureIgnoreCase)
+                && !crew.Job.Contains("storyboard", StringComparison.InvariantCultureIgnoreCase)
+                && !crew.Job.Contains("dialogue", StringComparison.InvariantCultureIgnoreCase)
+                && !crew.Job.Contains("head", StringComparison.InvariantCultureIgnoreCase)
+                && !crew.Job.Contains("coordinator", StringComparison.InvariantCultureIgnoreCase))
             {
                 return PersonType.Writer;
             }
