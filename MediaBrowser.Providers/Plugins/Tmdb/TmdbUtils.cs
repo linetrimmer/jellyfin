@@ -64,7 +64,8 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
         public static string MapCrewToPersonType(Crew crew)
         {
             if (crew.Department.Equals("production", StringComparison.InvariantCultureIgnoreCase)
-                && crew.Job.Contains("director", StringComparison.InvariantCultureIgnoreCase))
+                && crew.Job.Contains("director", StringComparison.InvariantCultureIgnoreCase)
+                && !crew.Job.Contains("casting", StringComparison.InvariantCultureIgnoreCase))
             {
                 return PersonType.Director;
             }
