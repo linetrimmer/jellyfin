@@ -30,7 +30,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
         /// <summary>
         /// Gets or sets a value indicating the maximum number of cast members to fetch for an item.
         /// </summary>
-        public int MaxCastMembers { get; set; } = 15;
+        public int MaxCastMembers { get; set; } = 150;
 
         /// <summary>
         /// Gets or sets a value indicating the poster image size to fetch.
