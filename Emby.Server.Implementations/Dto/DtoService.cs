@@ -1334,7 +1334,7 @@ namespace Emby.Server.Implementations.Dto
                     }
                 }
 
-                if (thumbLimit > 0 && !(imageTags != null && imageTags.ContainsKey(ImageType.Thumb)) && (dto.ParentThumbItemId is null || parent is Series) && parent is not ICollectionFolder && parent is not UserView)
+                if (thumbLimit > 0 && !(imageTags != null && imageTags.ContainsKey(ImageType.Thumb)) && dto.ParentThumbItemId is null && parent is not ICollectionFolder && parent is not UserView)
                 {
                     var image = allImages.FirstOrDefault(i => i.Type == ImageType.Thumb);
 
