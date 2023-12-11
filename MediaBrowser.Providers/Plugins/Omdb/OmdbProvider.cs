@@ -89,7 +89,7 @@ namespace MediaBrowser.Providers.Plugins.Omdb
 
             if (tomatoScore.HasValue)
             {
-                item.CriticRating = tomatoScore;
+                // item.CriticRating = tomatoScore;
             }
 
             if (!string.IsNullOrEmpty(result.imdbVotes)
@@ -102,7 +102,7 @@ namespace MediaBrowser.Providers.Plugins.Omdb
             if (float.TryParse(result.imdbRating, CultureInfo.InvariantCulture, out var imdbRating)
                 && imdbRating >= 0)
             {
-                item.CommunityRating = imdbRating;
+                // item.CommunityRating = imdbRating;
             }
 
             if (!string.IsNullOrEmpty(result.Website))
@@ -199,7 +199,7 @@ namespace MediaBrowser.Providers.Plugins.Omdb
 
             if (tomatoScore.HasValue)
             {
-                item.CriticRating = tomatoScore;
+                // item.CriticRating = tomatoScore;
             }
 
             if (!string.IsNullOrEmpty(result.imdbVotes)
@@ -212,7 +212,7 @@ namespace MediaBrowser.Providers.Plugins.Omdb
             if (float.TryParse(result.imdbRating, CultureInfo.InvariantCulture, out var imdbRating)
                 && imdbRating >= 0)
             {
-                item.CommunityRating = imdbRating;
+                // item.CommunityRating = imdbRating;
             }
 
             if (!string.IsNullOrEmpty(result.Website))

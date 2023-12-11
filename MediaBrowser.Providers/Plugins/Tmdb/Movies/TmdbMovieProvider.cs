@@ -205,7 +205,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb.Movies
                 movie.CollectionName = movieResult.BelongsToCollection.Name;
             }
 
-            movie.CommunityRating = Convert.ToSingle(movieResult.VoteAverage);
+            // movie.CommunityRating = Convert.ToSingle(movieResult.VoteAverage);
 
             if (movieResult.Releases?.Countries is not null)
             {
