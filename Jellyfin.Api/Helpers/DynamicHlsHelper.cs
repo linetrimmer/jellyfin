@@ -416,7 +416,7 @@ public class DynamicHlsHelper
     /// <seealso cref="GetPlaylistVideoCodecs(StreamState, string, int)"/>
     /// <param name="builder">StringBuilder to append the field to.</param>
     /// <param name="state">StreamState of the current stream.</param>
-    private void AppendPlaylistSupplementalCodecsField(StringBuilder builder, StreamState state)
+    internal static void AppendPlaylistSupplementalCodecsField(StringBuilder builder, StreamState state)
     {
         // Dolby Vision currently cannot exist when transcoding
         if (!EncodingHelper.IsCopyCodec(state.OutputVideoCodec))
@@ -424,9 +424,10 @@ public class DynamicHlsHelper
             return;
         }
 
-        var dvProfile = state.VideoStream.DvProfile;
+        var convertingProfile7 = state.IsDoviProfile7To8Conversion;
+        var dvProfile = convertingProfile7 ? 8 : state.VideoStream.DvProfile;
         var dvLevel = state.VideoStream.DvLevel;
-        var dvRangeString = state.VideoStream.VideoRangeType switch
+        var dvRangeString = convertingProfile7 ? "db1p" : state.VideoStream.VideoRangeType switch
         {
             VideoRangeType.DOVIWithHDR10 => "db1p",
             VideoRangeType.DOVIWithHLG => "db4h",

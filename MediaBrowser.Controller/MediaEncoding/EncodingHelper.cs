@@ -2178,7 +2178,12 @@ namespace MediaBrowser.Controller.MediaEncoding
                 var requestHasHLG = requestedRangeTypes.Contains(VideoRangeType.HLG.ToString(), StringComparison.OrdinalIgnoreCase);
                 var requestHasSDR = requestedRangeTypes.Contains(VideoRangeType.SDR.ToString(), StringComparison.OrdinalIgnoreCase);
 
-                if (!requestedRangeTypes.Contains(videoStream.VideoRangeType.ToString(), StringComparison.OrdinalIgnoreCase)
+                var convertingProfile7 = string.Equals(request.GetOption("doviP7ToP81"), "true", StringComparison.OrdinalIgnoreCase)
+                    && videoStream.IsDoviProfile7WithBaseLayer()
+                    && requestedRangeTypes.Contains(VideoRangeType.DOVIWithHDR10.ToString(), StringComparison.OrdinalIgnoreCase);
+
+                if (!convertingProfile7
+                    && !requestedRangeTypes.Contains(videoStream.VideoRangeType.ToString(), StringComparison.OrdinalIgnoreCase)
                      && !((requestHasHDR10 && videoStream.VideoRangeType == VideoRangeType.DOVIWithHDR10)
                             || (requestHasHLG && videoStream.VideoRangeType == VideoRangeType.DOVIWithHLG)
                             || (requestHasSDR && videoStream.VideoRangeType == VideoRangeType.DOVIWithSDR)))

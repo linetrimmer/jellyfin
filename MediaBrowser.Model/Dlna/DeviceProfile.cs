@@ -15,6 +15,11 @@ namespace MediaBrowser.Model.Dlna;
 public class DeviceProfile
 {
     /// <summary>
+    /// Gets or sets a value indicating whether the client supports Dolby Vision Profile 8.1 output converted from Profile 7.
+    /// </summary>
+    public bool SupportsDoviProfile7To8Conversion { get; set; }
+
+    /// <summary>
     /// Gets or sets the name of this device profile. User profiles must have a unique name.
     /// </summary>
     public string? Name { get; set; }

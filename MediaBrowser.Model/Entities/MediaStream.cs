@@ -711,6 +711,16 @@ namespace MediaBrowser.Model.Entities
             };
         }
 
+        /// <summary>
+        /// Gets a value indicating whether this stream has the metadata required for Profile 7 to Profile 8.1 conversion.
+        /// </summary>
+        /// <returns>Whether the stream is a Dolby Vision Profile 7 HEVC base layer with an RPU.</returns>
+        public bool IsDoviProfile7WithBaseLayer()
+            => string.Equals(Codec, "hevc", StringComparison.OrdinalIgnoreCase)
+                && DvProfile == 7
+                && RpuPresentFlag == 1
+                && BlPresentFlag == 1;
+
         public static bool IsTextFormat(string format)
         {
             string codec = format ?? string.Empty;

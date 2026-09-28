@@ -46,6 +46,15 @@ public class StreamState : EncodingJobInfo, IDisposable
     }
 
     /// <summary>
+    /// Gets a value indicating whether the requested video copy converts Dolby Vision Profile 7 to Profile 8.1.
+    /// </summary>
+    public bool IsDoviProfile7To8Conversion =>
+        EncodingHelper.IsCopyCodec(OutputVideoCodec)
+        && string.Equals(Request.GetOption("doviP7ToP81"), "true", StringComparison.OrdinalIgnoreCase)
+        && VideoStream is not null
+        && VideoStream.IsDoviProfile7WithBaseLayer();
+
+    /// <summary>
     /// Gets the video request.
     /// </summary>
     public VideoRequestDto? VideoRequest => Request as VideoRequestDto;

@@ -1812,37 +1812,7 @@ public class DynamicHlsController : BaseJellyfinApiController
 
         var args = "-codec:v:0 " + codec;
 
-        var isActualOutputVideoCodecAv1 = string.Equals(state.ActualOutputVideoCodec, "av1", StringComparison.OrdinalIgnoreCase);
-        var isActualOutputVideoCodecHevc = string.Equals(state.ActualOutputVideoCodec, "h265", StringComparison.OrdinalIgnoreCase)
-                                           || string.Equals(state.ActualOutputVideoCodec, "hevc", StringComparison.OrdinalIgnoreCase);
-
-        if (isActualOutputVideoCodecHevc || isActualOutputVideoCodecAv1)
-        {
-            var requestedRange = state.GetRequestedRangeTypes(state.ActualOutputVideoCodec);
-            // Clients reporting Dolby Vision capabilities with fallbacks may only support the fallback layer.
-            // Only enable Dolby Vision remuxing if the client explicitly declares support for profiles without fallbacks.
-            var clientSupportsDoVi = requestedRange.Contains(VideoRangeType.DOVI.ToString(), StringComparison.OrdinalIgnoreCase);
-            var videoIsDoVi = state.VideoStream.VideoRangeType is VideoRangeType.DOVI or VideoRangeType.DOVIWithHDR10 or VideoRangeType.DOVIWithHLG or VideoRangeType.DOVIWithSDR;
-
-            if (EncodingHelper.IsCopyCodec(codec)
-                && (videoIsDoVi && clientSupportsDoVi))
-            {
-                if (isActualOutputVideoCodecHevc)
-                {
-                    // Prefer dvh1 to dvhe
-                    args += " -tag:v:0 dvh1 -strict -2";
-                }
-                else if (isActualOutputVideoCodecAv1)
-                {
-                    args += " -tag:v:0 dav1 -strict -2";
-                }
-            }
-            else if (isActualOutputVideoCodecHevc)
-            {
-                // Prefer hvc1 to hev1
-                args += " -tag:v:0 hvc1";
-            }
-        }
+        args += GetVideoCodecTagArguments(state, codec);
 
         // if  (state.EnableMpegtsM2TsMode)
         // {
@@ -1853,13 +1823,10 @@ public class DynamicHlsController : BaseJellyfinApiController
         if (EncodingHelper.IsCopyCodec(codec))
         {
             // If h264_mp4toannexb is ever added, do not use it for live tv.
-            if (state.VideoStream is not null && !string.Equals(state.VideoStream.NalLengthSize, "0", StringComparison.OrdinalIgnoreCase))
+            var bitStreamArgs = GetCopyVideoBitStreamArgs(state);
+            if (!string.IsNullOrEmpty(bitStreamArgs))
             {
-                string bitStreamArgs = EncodingHelper.GetBitStreamArgs(state.VideoStream);
-                if (!string.IsNullOrEmpty(bitStreamArgs))
-                {
-                    args += " " + bitStreamArgs;
-                }
+                args += " " + bitStreamArgs;
             }
 
             args += " -start_at_zero";
@@ -1911,6 +1878,69 @@ public class DynamicHlsController : BaseJellyfinApiController
         args += _encodingHelper.GetOutputFFlags(state);
 
         return args;
+    }
+
+    internal static string GetVideoCodecTagArguments(StreamState state, string codec)
+    {
+        if (state.VideoStream is null)
+        {
+            return string.Empty;
+        }
+
+        var isActualOutputVideoCodecAv1 = string.Equals(state.ActualOutputVideoCodec, "av1", StringComparison.OrdinalIgnoreCase);
+        var isActualOutputVideoCodecHevc = string.Equals(state.ActualOutputVideoCodec, "h265", StringComparison.OrdinalIgnoreCase)
+                                           || string.Equals(state.ActualOutputVideoCodec, "hevc", StringComparison.OrdinalIgnoreCase);
+
+        if (isActualOutputVideoCodecHevc || isActualOutputVideoCodecAv1)
+        {
+            var requestedRange = state.GetRequestedRangeTypes(state.ActualOutputVideoCodec);
+            // Clients reporting Dolby Vision capabilities with fallbacks may only support the fallback layer.
+            // Only enable Dolby Vision remuxing if the client explicitly declares support for profiles without fallbacks.
+            var clientSupportsDoVi = requestedRange.Contains(VideoRangeType.DOVI.ToString(), StringComparison.OrdinalIgnoreCase);
+            var videoIsDoVi = state.VideoStream.VideoRangeType is VideoRangeType.DOVI or VideoRangeType.DOVIWithHDR10 or VideoRangeType.DOVIWithHLG or VideoRangeType.DOVIWithSDR;
+
+            if (EncodingHelper.IsCopyCodec(codec)
+                && ((videoIsDoVi && clientSupportsDoVi) || state.IsDoviProfile7To8Conversion))
+            {
+                if (isActualOutputVideoCodecHevc)
+                {
+                    // Prefer dvh1 to dvhe
+                    return " -tag:v:0 dvh1 -strict -2";
+                }
+                else if (isActualOutputVideoCodecAv1)
+                {
+                    return " -tag:v:0 dav1 -strict -2";
+                }
+            }
+            else if (isActualOutputVideoCodecHevc)
+            {
+                // Prefer hvc1 to hev1
+                return " -tag:v:0 hvc1";
+            }
+        }
+
+        return string.Empty;
+    }
+
+    internal static string GetCopyVideoBitStreamArgs(StreamState state)
+    {
+        if (state.VideoStream is null)
+        {
+            return string.Empty;
+        }
+
+        var existingArgs = string.Equals(state.VideoStream.NalLengthSize, "0", StringComparison.OrdinalIgnoreCase)
+            ? string.Empty
+            : EncodingHelper.GetBitStreamArgs(state.VideoStream);
+
+        if (!state.IsDoviProfile7To8Conversion)
+        {
+            return existingArgs ?? string.Empty;
+        }
+
+        return string.IsNullOrEmpty(existingArgs)
+            ? "-bsf:v dovi_p7_to_p81"
+            : existingArgs + ",dovi_p7_to_p81";
     }
 
     private string GetSegmentPath(StreamState state, string playlist, int index)

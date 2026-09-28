@@ -675,9 +675,17 @@ namespace MediaBrowser.Model.Dlna
             }
 
             var videoStream = item.VideoStream;
+            var convertDoviProfile7 = options.Profile.SupportsDoviProfile7To8Conversion
+                && videoStream is not null
+                && videoStream.IsDoviProfile7WithBaseLayer();
+
+            if (convertDoviProfile7)
+            {
+                playlistItem.SetOption("doviP7ToP81", "true");
+            }
 
             var bitrateLimitExceeded = IsBitrateLimitExceeded(item, options.GetMaxBitrate(false) ?? 0);
-            var isEligibleForDirectPlay = options.EnableDirectPlay && (options.ForceDirectPlay || !bitrateLimitExceeded);
+            var isEligibleForDirectPlay = !convertDoviProfile7 && options.EnableDirectPlay && (options.ForceDirectPlay || !bitrateLimitExceeded);
             var isEligibleForDirectStream = options.EnableDirectStream && (options.ForceDirectStream || !bitrateLimitExceeded);
             TranscodeReason transcodeReasons = 0;
 
@@ -1276,7 +1284,7 @@ namespace MediaBrowser.Model.Dlna
             bool isEligibleForDirectPlay,
             bool isEligibleForDirectStream)
         {
-            if (options.ForceDirectPlay)
+            if (options.ForceDirectPlay && isEligibleForDirectPlay)
             {
                 return (null, PlayMethod.DirectPlay, audioStream?.Index, 0);
             }

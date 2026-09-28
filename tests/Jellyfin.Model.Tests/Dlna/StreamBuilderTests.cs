@@ -20,6 +20,41 @@ namespace Jellyfin.Model.Tests
     public class StreamBuilderTests
     {
         [Theory]
+        [InlineData(true, 7, 1, 1, false, true)]
+        [InlineData(false, 7, 1, 1, true, false)]
+        [InlineData(true, 8, 1, 1, false, false)]
+        [InlineData(true, null, null, null, true, false)]
+        [InlineData(true, 7, 0, 1, true, false)]
+        [InlineData(true, 7, 1, 0, true, false)]
+        public async Task DoviProfile7Conversion_RoutesThroughVideoCopy(
+            bool supportsConversion,
+            int? dvProfile,
+            int? rpuPresent,
+            int? blPresent,
+            bool expectDirectPlay,
+            bool expectConversion)
+        {
+            var options = await GetMediaOptions("Chrome", "mp4-hevc-aac-srt-15200k");
+            options.Profile.SupportsDoviProfile7To8Conversion = supportsConversion;
+            var videoStream = options.MediaSources[0].VideoStream;
+            videoStream.DvProfile = dvProfile;
+            videoStream.DvBlSignalCompatibilityId = dvProfile == 8 ? 1 : null;
+            videoStream.RpuPresentFlag = rpuPresent;
+            videoStream.BlPresentFlag = blPresent;
+
+            var streamInfo = GetStreamBuilder().GetOptimalVideoStream(options);
+
+            Assert.NotNull(streamInfo);
+            Assert.Equal(expectDirectPlay, streamInfo.PlayMethod == PlayMethod.DirectPlay);
+            Assert.Equal(expectConversion ? "true" : null, streamInfo.GetOption("doviP7ToP81"));
+            if (expectConversion)
+            {
+                Assert.Contains("hevc", streamInfo.VideoCodecs);
+                Assert.Contains("doviP7ToP81=true", streamInfo.ToUrl("media:", "token"), StringComparison.Ordinal);
+            }
+        }
+
+        [Theory]
         // Chrome
         [InlineData("Chrome", "mp4-h264-aac-vtt-2600k", PlayMethod.DirectPlay)] // #6450
         [InlineData("Chrome", "mp4-h264-ac3-aac-srt-2600k", PlayMethod.Transcode, TranscodeReason.AudioCodecNotSupported, "DirectStream", "HLS.mp4")] // #6450
