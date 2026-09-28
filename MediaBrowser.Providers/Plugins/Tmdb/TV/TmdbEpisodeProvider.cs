@@ -183,7 +183,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb.TV
                 PremiereDate = episodeResult.AirDate,
                 ProductionYear = episodeResult.AirDate?.Year,
                 Overview = episodeResult.Overview,
-                CommunityRating = Convert.ToSingle(episodeResult.VoteAverage)
+                // CommunityRating = Convert.ToSingle(episodeResult.VoteAverage)
             };
 
             var externalIds = episodeResult.ExternalIds;
