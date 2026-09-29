@@ -20,6 +20,22 @@ namespace Jellyfin.Model.Tests
     public class StreamBuilderTests
     {
         [Theory]
+        [InlineData("mp4-hevc-aac-srt-15200k", true, true)]
+        [InlineData("mp4-hevc-aac-srt-15200k", false, false)]
+        [InlineData("mp4-h264-aac-vtt-2600k", true, false)]
+        public async Task PreferDoviHvc1_OnlyPropagatesForHevcWhenRequested(string mediaSource, bool preference, bool expected)
+        {
+            var options = await GetMediaOptions("Chrome", mediaSource);
+            options.Profile.PreferDoviHvc1 = preference;
+
+            var streamInfo = GetStreamBuilder().GetOptimalVideoStream(options);
+
+            Assert.NotNull(streamInfo);
+            Assert.Equal(expected ? "true" : null, streamInfo.GetOption("preferDoviHvc1"));
+            Assert.Equal(expected, streamInfo.ToUrl("media:", "token").Contains("preferDoviHvc1=true", StringComparison.Ordinal));
+        }
+
+        [Theory]
         [InlineData(true, 7, 1, 1, false, true)]
         [InlineData(false, 7, 1, 1, true, false)]
         [InlineData(true, 8, 1, 1, false, false)]

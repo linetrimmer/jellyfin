@@ -1904,8 +1904,15 @@ public class DynamicHlsController : BaseJellyfinApiController
             {
                 if (isActualOutputVideoCodecHevc)
                 {
-                    // Prefer dvh1 to dvhe
-                    return " -tag:v:0 dvh1 -strict -2";
+                    var preferDoviHvc1 = string.Equals(state.Request.GetOption("preferDoviHvc1"), "true", StringComparison.OrdinalIgnoreCase)
+                        && (state.IsDoviProfile7To8Conversion
+                            || (state.VideoStream.DvProfile == 8
+                                && state.VideoStream.DvBlSignalCompatibilityId == 1
+                                && state.VideoStream.RpuPresentFlag == 1
+                                && state.VideoStream.BlPresentFlag == 1));
+
+                    // Preserve dvh1 by default; selected Profile 8.1 clients may request hvc1.
+                    return preferDoviHvc1 ? " -tag:v:0 hvc1 -strict -2" : " -tag:v:0 dvh1 -strict -2";
                 }
                 else if (isActualOutputVideoCodecAv1)
                 {

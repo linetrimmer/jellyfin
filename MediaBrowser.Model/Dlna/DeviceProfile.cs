@@ -20,6 +20,11 @@ public class DeviceProfile
     public bool SupportsDoviProfile7To8Conversion { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether the client prefers hvc1 sample-entry tagging for Dolby Vision Profile 8.1 output.
+    /// </summary>
+    public bool PreferDoviHvc1 { get; set; }
+
+    /// <summary>
     /// Gets or sets the name of this device profile. User profiles must have a unique name.
     /// </summary>
     public string? Name { get; set; }

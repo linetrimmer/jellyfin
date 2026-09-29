@@ -12,6 +12,50 @@ namespace Jellyfin.Api.Tests.Controllers
     public class DynamicHlsControllerTests
     {
         [Theory]
+        [InlineData(8, false, true, " -tag:v:0 hvc1 -strict -2")]
+        [InlineData(8, false, false, " -tag:v:0 dvh1 -strict -2")]
+        [InlineData(7, true, true, " -tag:v:0 hvc1 -strict -2")]
+        [InlineData(7, true, false, " -tag:v:0 dvh1 -strict -2")]
+        [InlineData(5, false, true, " -tag:v:0 dvh1 -strict -2")]
+        [InlineData(7, false, true, " -tag:v:0 hvc1")]
+        [InlineData(null, false, true, " -tag:v:0 hvc1")]
+        public void GetVideoCodecTagArguments_PrefersHvc1OnlyForProfile81(
+            int? profile,
+            bool convertProfile7,
+            bool preferDoviHvc1,
+            string expected)
+        {
+            using var state = new StreamState(null!, TranscodingJobType.Hls, null!)
+            {
+                Request = new VideoRequestDto(),
+                MediaSource = new MediaBrowser.Model.Dto.MediaSourceInfo(),
+                OutputVideoCodec = "copy",
+                VideoStream = new MediaStream
+                {
+                    Type = MediaStreamType.Video,
+                    Codec = "hevc",
+                    ColorTransfer = "smpte2084",
+                    DvProfile = profile,
+                    DvBlSignalCompatibilityId = profile == 8 ? 1 : profile == 5 ? 0 : null,
+                    RpuPresentFlag = profile.HasValue ? 1 : null,
+                    BlPresentFlag = profile.HasValue ? 1 : null
+                }
+            };
+            state.Request.StreamOptions["hevc-rangetype"] = "DOVI,DOVIWithHDR10,HDR10";
+            if (convertProfile7)
+            {
+                state.Request.StreamOptions["doviP7ToP81"] = "true";
+            }
+
+            if (preferDoviHvc1)
+            {
+                state.Request.StreamOptions["preferDoviHvc1"] = "true";
+            }
+
+            Assert.Equal(expected, DynamicHlsController.GetVideoCodecTagArguments(state, "copy"));
+        }
+
+        [Theory]
         [InlineData(true, 7, "copy", " -tag:v:0 dvh1 -strict -2")]
         [InlineData(false, 7, "copy", " -tag:v:0 hvc1")]
         [InlineData(true, 8, "copy", " -tag:v:0 hvc1")]

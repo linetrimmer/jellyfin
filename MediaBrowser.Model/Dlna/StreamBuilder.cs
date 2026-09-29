@@ -675,6 +675,13 @@ namespace MediaBrowser.Model.Dlna
             }
 
             var videoStream = item.VideoStream;
+            if (options.Profile.PreferDoviHvc1
+                && videoStream is not null
+                && string.Equals(videoStream.Codec, "hevc", StringComparison.OrdinalIgnoreCase))
+            {
+                playlistItem.SetOption("preferDoviHvc1", "true");
+            }
+
             var convertDoviProfile7 = options.Profile.SupportsDoviProfile7To8Conversion
                 && videoStream is not null
                 && videoStream.IsDoviProfile7WithBaseLayer();
