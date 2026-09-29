@@ -5,6 +5,7 @@ using Jellyfin.Api.Helpers;
 using MediaBrowser.Controller.MediaEncoding;
 using MediaBrowser.Controller.Streaming;
 using MediaBrowser.Model.Entities;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace Jellyfin.Api.Tests.Controllers
@@ -158,6 +159,71 @@ namespace Jellyfin.Api.Tests.Controllers
             DynamicHlsHelper.AppendPlaylistSupplementalCodecsField(builder, state);
 
             Assert.Equal(expected, builder.ToString());
+        }
+
+        [Theory]
+        [InlineData(8, false, true, " -tag:v:0 hvc1 -strict -2", "dvh1.08.07/db1p")]
+        [InlineData(7, true, true, " -tag:v:0 hvc1 -strict -2", "dvh1.08.07/db1p")]
+        [InlineData(5, false, true, " -tag:v:0 dvh1 -strict -2", null)]
+        [InlineData(null, false, true, " -tag:v:0 hvc1", null)]
+        public void Profile81Playlist_UsesCompatibleBaseSignalingOnlyForDolbyVisionWithHdr10(
+            int? dvProfile,
+            bool convertProfile7,
+            bool preferDoviHvc1,
+            string expectedTag,
+            string? supplementalCodec)
+        {
+            using var state = new StreamState(null!, TranscodingJobType.Hls, null!)
+            {
+                Request = new VideoRequestDto(),
+                MediaSource = new MediaBrowser.Model.Dto.MediaSourceInfo(),
+                OutputVideoCodec = "copy",
+                OutputAudioCodec = "copy",
+                VideoStream = new MediaStream
+                {
+                    Type = MediaStreamType.Video,
+                    Codec = "hevc",
+                    Profile = "Main 10",
+                    Level = 150,
+                    ColorTransfer = "smpte2084",
+                    DvProfile = dvProfile,
+                    DvLevel = dvProfile.HasValue ? 7 : null,
+                    DvBlSignalCompatibilityId = dvProfile == 8 ? 1 : dvProfile == 5 ? 0 : null,
+                    RpuPresentFlag = dvProfile.HasValue ? 1 : null,
+                    BlPresentFlag = dvProfile.HasValue ? 1 : null
+                },
+                AudioStream = new MediaStream { Type = MediaStreamType.Audio, Codec = "aac" }
+            };
+            state.Request.StreamOptions["hevc-rangetype"] = "DOVI,DOVIWithHDR10,HDR10";
+            if (convertProfile7)
+            {
+                state.Request.StreamOptions["doviP7ToP81"] = "true";
+            }
+
+            if (preferDoviHvc1)
+            {
+                state.Request.StreamOptions["preferDoviHvc1"] = "true";
+            }
+
+            var helper = new DynamicHlsHelper(null!, null!, null!, null!, null!, null!, null!, NullLogger<DynamicHlsHelper>.Instance, null!, null!, null!);
+            var playlist = new StringBuilder().AppendLine("#EXTM3U");
+            helper.AppendPlaylist(playlist, state, "main.m3u8", 20000000, null);
+            var masterPlaylist = DynamicHlsHelper.GetMasterPlaylistContent(playlist);
+
+            Assert.Contains("VIDEO-RANGE=PQ,CODECS=\"hvc1.2.4.L150.B0,mp4a.40.2\"", masterPlaylist, StringComparison.Ordinal);
+            if (supplementalCodec is null)
+            {
+                Assert.StartsWith("#EXTM3U" + Environment.NewLine + "#EXT-X-STREAM-INF:", masterPlaylist, StringComparison.Ordinal);
+                Assert.DoesNotContain("SUPPLEMENTAL-CODECS", masterPlaylist, StringComparison.Ordinal);
+            }
+            else
+            {
+                Assert.StartsWith("#EXTM3U" + Environment.NewLine + "#EXT-X-VERSION:10" + Environment.NewLine + "#EXT-X-STREAM-INF:", masterPlaylist, StringComparison.Ordinal);
+                Assert.Contains($"SUPPLEMENTAL-CODECS=\"{supplementalCodec}\"", masterPlaylist, StringComparison.Ordinal);
+                Assert.DoesNotContain("dvh1.07.", masterPlaylist, StringComparison.Ordinal);
+            }
+
+            Assert.Equal(expectedTag, DynamicHlsController.GetVideoCodecTagArguments(state, "copy"));
         }
 
         [Theory]

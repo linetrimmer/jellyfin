@@ -289,10 +289,22 @@ public class DynamicHlsHelper
             AddTrickplay(state, trickplayResolutions, builder, _httpContextAccessor.HttpContext.User);
         }
 
-        return new FileContentResult(Encoding.UTF8.GetBytes(builder.ToString()), MimeTypes.GetMimeType("playlist.m3u8"));
+        return new FileContentResult(Encoding.UTF8.GetBytes(GetMasterPlaylistContent(builder)), MimeTypes.GetMimeType("playlist.m3u8"));
     }
 
-    private StringBuilder AppendPlaylist(StringBuilder builder, StreamState state, string url, int bitrate, string? subtitleGroup)
+    internal static string GetMasterPlaylistContent(StringBuilder builder)
+    {
+        var playlist = builder.ToString();
+        if (playlist.Contains(",SUPPLEMENTAL-CODECS=", StringComparison.Ordinal))
+        {
+            // SUPPLEMENTAL-CODECS requires HLS protocol version 10 in a multivariant playlist.
+            playlist = playlist.Insert("#EXTM3U".Length + Environment.NewLine.Length, "#EXT-X-VERSION:10" + Environment.NewLine);
+        }
+
+        return playlist;
+    }
+
+    internal StringBuilder AppendPlaylist(StringBuilder builder, StreamState state, string url, int bitrate, string? subtitleGroup)
     {
         var playlistBuilder = new StringBuilder();
         playlistBuilder.Append("#EXT-X-STREAM-INF:BANDWIDTH=")
